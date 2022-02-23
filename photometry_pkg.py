@@ -45,6 +45,7 @@ import pandas as pd
 
 from numpy.random import normal
 
+
 ## This function performs the aperature photometry and returns instrumental magnitudes for a given source
 ##  at (_ra, _dec)
 
@@ -213,7 +214,6 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
         # Deriving instrumental magnitude from final counts
     
         final_count = final_sum.data[0]
-        exp_time = exp1[0].header['EXPOSURE']
     
         inst_mag = -2.5*np.log10(final_count)
     
@@ -959,7 +959,7 @@ def chi_2_calc(mags, mag_errs, epochs):
 
 ## Creating master function to reduce data using relative photometry
 
-def data_master(names, ras, decs, out_dir, cal_pan_dir):
+def data_master(names, ras, decs, out_dir, cal_pan_dir = False):
     
     for agn in names:
         
@@ -974,7 +974,7 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
             os.mkdir(out_dir + agn)
 
 
-        if not os.path.exists(cal_pan_dir + agn + '/cal_table.fits'): 
+        if cal_pan_dir == False:
 
 
             results = TAP_service.run_async("""
@@ -1097,7 +1097,7 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
 
 
 
-        elif os.path.exists(cal_pan_dir + agn + '/cal_table.fits'):
+        elif cal_pan_dir != False:
 
             cal_table = fits.open(cal_pan_dir + agn + '/cal_table.fits')
 
@@ -1116,7 +1116,7 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
                 rel_final_mags, rel_final_mag_err, rel_final_epochs, rel_fluxes, rel_flux_errs = backup_data_maker(ras[agn], decs[agn])
 
 
-        if not os.path.exists(cal_pan_dir + agn + '/panstarrs_table.fits'):
+        if cal_pan_dir == False:
 
             results = TAP_service.run_async("""
             SELECT objID, raMean, decMean,
@@ -1138,7 +1138,7 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
             pan_table.write(out_dir+ agn + '/panstarrs_table.fits', overwrite=True)
 
 
-        elif os.path.exists(cal_pan_dir + agn + '/panstarrs_table.fits'):
+        elif cal_pan_dir != False:
 
             pan_table = fits.open(cal_pan_dir + agn + '/panstarrs_table.fits')
 
@@ -1174,4 +1174,3 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
     
 
 
-    
