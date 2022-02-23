@@ -45,7 +45,6 @@ import pandas as pd
 
 from numpy.random import normal
 
-
 ## This function performs the aperature photometry and returns instrumental magnitudes for a given source
 ##  at (_ra, _dec)
 
@@ -88,6 +87,15 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
     ys = [] 
     final_counts = [] 
     ap_errs = []
+    
+    cal_inst_mags = []
+    cal_epochs = [] 
+    cal_inst_mag_errs = [] 
+    cal_epoch_mjds = [] 
+    cal_xs = [] 
+    cal_ys = [] 
+    cal_final_counts = [] 
+    cal_ap_errs = []
     
     
     for i in range(len(urls)):
@@ -232,14 +240,7 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
         
         ##########################################
             
-        cal_inst_mags = []
-        cal_epochs = [] 
-        cal_inst_mag_errs = [] 
-        cal_epoch_mjds = [] 
-        cal_xs = [] 
-        cal_ys = [] 
-        cal_final_counts = [] 
-        cal_ap_errs = []
+        
     
         
     
@@ -247,7 +248,9 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
     
         x,y = w.world_to_pixel(sky)
         
-    
+        x = x[0]
+        y = y[0]
+        
         ## Requiring the science image to include a 13 pixel buffer around the source
         
     
@@ -291,10 +294,17 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
     
         ## Minimizing the S/N for the aperture by adjusting for seeing
     
+        if ap_radius >= 2:
+            aperture2 = CircularAperture((x,y), r=ap_radius)
+        else:
+            aperture2 = CircularAperture((x,y), r=2)
+    
+    
+    
     
         bkg_annulus = CircularAnnulus((x,y), r_in=8, r_out=12)
     
-        apers = [aperture,bkg_annulus]
+        apers = [aperture2,bkg_annulus]
     
         phot_table = aperture_photometry(exp1_data, apers, method = 'exact')
     
@@ -341,12 +351,6 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
     
         inst_mag_err = 2.5*np.log10(final_count + ap_err) + inst_mag
     
-        epoch_mjd = exp1[0].header['OBSMJD']
-        #print(epoch_mjd)
-    
-        t = Time(epoch_mjd, format = 'mjd')
-    
-        epoch = t.byear
         
         cal_inst_mags.append(inst_mag)
         cal_epochs.append(epoch)
@@ -357,10 +361,10 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
         cal_final_counts.append(final_count) 
         cal_ap_errs.append(ap_err)
         
-        
+
     sorting = np.argsort(epoch_mjds)
-        
-        
+
+
     inst_mags = np.array(inst_mags)[sorting]
     epochs = np.array(epochs)[sorting]
     inst_mag_errs = np.array(inst_mag_errs)[sorting]
@@ -369,8 +373,9 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
     ys = np.array(ys)[sorting]
     final_counts = np.array(final_counts)[sorting]
     ap_errs = np.array(ap_errs)[sorting]    
-        
+
     sorting = np.argsort(cal_epoch_mjds)
+
         
     cal_inst_mags = np.array(cal_inst_mags)[sorting]
     cal_epochs = np.array(cal_epochs)[sorting]
@@ -385,7 +390,7 @@ def calibrator_calc(_ra, _dec, urls, cal_ra = False, cal_dec = False):
         
     del exp1_data
     del exp1
-        
+    
     return(inst_mags, epochs, inst_mag_errs, epoch_mjds, xs, ys, final_counts, ap_errs, cal_inst_mags, cal_epochs, cal_inst_mag_errs, cal_epoch_mjds, cal_xs, cal_ys, cal_final_counts, cal_ap_errs)
 
 
@@ -413,9 +418,9 @@ def data_maker(ra, dec, cal_ra, cal_dec, pan_mag, pan_mag_err):
 
     final_epochs = np.delete(epochs, i1)
 
-    final_mag_err = np.delete(mag_errs, i1)
+    final_mag_err = np.delete(errs, i1)
 
-    final_epoch_mjd = np.delete(epoch_mjds, i1)
+    final_epoch_mjd = np.delete(mjds, i1)
 
     xs = np.delete(xs, i1)
     
@@ -442,9 +447,9 @@ def data_maker(ra, dec, cal_ra, cal_dec, pan_mag, pan_mag_err):
 
     cal_final_epochs = np.delete(cal_epochs, i1)
 
-    cal_final_mag_err = np.delete(cal_mag_err, i1)
+    cal_final_mag_err = np.delete(cal_errs, i1)
 
-    cal_final_epoch_mjd = np.delete(cal_epoch_mjd, i1)
+    cal_final_epoch_mjd = np.delete(cal_mjds, i1)
 
     cal_xs = np.delete(cal_xs, i1)
     
@@ -490,7 +495,7 @@ def data_maker(ra, dec, cal_ra, cal_dec, pan_mag, pan_mag_err):
     combined_fluxes = np.array(combined_fluxes)
     combined_flux_errs = np.array(combined_flux_errs)
     
-    
+    print(mag_diff)
     #print('Calibration Success!')
     return(mag_diff, combined_err, combined_epochs, combined_fluxes, combined_flux_errs, deleted_epochs)
     
@@ -1075,7 +1080,7 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
 
 
 
-
+            
             rel_final_mags, rel_final_mag_err, rel_final_epochs, rel_fluxes, rel_flux_errs, deleted_epochs = data_maker(ras[agn], decs[agn], cal_star_ra,cal_star_dec, cal_star_mag, cal_star_mag_err)
 
             if deleted_epochs:
@@ -1164,6 +1169,9 @@ def data_master(names, ras, decs, out_dir, cal_pan_dir):
 
         lc_plotter(rel_final_mags, rel_final_epochs, 'r', rel_fluxes, rel_flux_errs, errors = rel_final_mag_err, ylim = 0.5, lc_type = 'Relative $' + agn + '$', pan_date_mag= pan_data, xlim = (2009,2022), out_dir = out_dir+agn + '/lc_'+ agn + '.pdf', epoch_scatter= True)
         #lc_plotter(rel_final_mags, rel_final_epochs, 'r', rel_fluxes, rel_flux_errs, errors = rel_final_mag_err, ylim = 1, lc_type = 'Relative $' + agn + '$', pan_date_mag=[results['epochMean'][0], results['rMeanApMag'][0], results['rMeanApMagErr'][0]], xlim = (2009,2022), out_dir = out_dir+agn + '/lc2_'+ agn + '.pdf', epoch_scatter=True)
+
+
+    
 
 
     
