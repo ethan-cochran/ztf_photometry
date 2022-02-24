@@ -37,9 +37,6 @@ import os
 from scipy.stats import chi2
 from scipy.special import erf
 
-from tools import phot_tools as phot
-
-from tools import plotting_tools as pt
 import astropy.units as u
 import pandas as pd
 
@@ -772,7 +769,7 @@ def lc_plotter(mags, dates, bandpass, fluxes, flux_errs, xlim = (2009, 2021.5), 
     
     
 
-    mag_mean = pt.chi_2_calc(mags, errors, dates)[1]
+    mag_mean = chi_2_calc(mags, errors, dates)[1]
     ax1.hlines(mag_mean, xlim[0], xlim[1], colors = 'red')
     
     ax1.set_xlabel(r'Date', fontsize = 20)
@@ -876,17 +873,17 @@ def lc_plotter(mags, dates, bandpass, fluxes, flux_errs, xlim = (2009, 2021.5), 
 
         if len(first_epoch_mags) > 2:
             ax1.text(xlim[0]+0.2, mag_mean + ylim - 0.15, r'Epoch 1:', fontsize = 16)
-            ax1.text(xlim[0]+0.2, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(pt.chi_2_calc(first_epoch_mags, first_epoch_err, first_epochs)[1],2)), fontsize = 16)
+            ax1.text(xlim[0]+0.2, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(chi_2_calc(first_epoch_mags, first_epoch_err, first_epochs)[1],2)), fontsize = 16)
             ax1.text(xlim[0]+0.2, mag_mean + ylim - 0.05, r'$\sigma =$' + str(round(np.std(first_epoch_mags),2)), fontsize = 16)  
         
         if len(second_epoch_mags) > 2:
             ax1.text(xlim[0]+1.5, mag_mean + ylim - 0.15, r'Epoch 2:', fontsize = 16)
-            ax1.text(xlim[0]+1.5, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(pt.chi_2_calc(second_epoch_mags, second_epoch_err, second_epochs)[1],2)), fontsize = 16)
+            ax1.text(xlim[0]+1.5, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(chi_2_calc(second_epoch_mags, second_epoch_err, second_epochs)[1],2)), fontsize = 16)
             ax1.text(xlim[0]+1.5, mag_mean + ylim - 0.05, r'$\sigma =$' + str(round(np.std(second_epoch_mags),2)), fontsize = 16)
         
         if len(third_epoch_mags) > 2:
             ax1.text(xlim[0]+2.8, mag_mean + ylim - 0.15, r'Epoch 3:', fontsize = 16)
-            ax1.text(xlim[0]+2.8, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(pt.chi_2_calc(third_epoch_mags, third_epoch_err, third_epochs)[1],2)), fontsize = 16)
+            ax1.text(xlim[0]+2.8, mag_mean + ylim - 0.1, r'$\bar{m} =$' + str(round(chi_2_calc(third_epoch_mags, third_epoch_err, third_epochs)[1],2)), fontsize = 16)
             ax1.text(xlim[0]+2.8, mag_mean + ylim - 0.05, r'$\sigma =$' + str(round(np.std(third_epoch_mags),2)), fontsize = 16)
     
     
